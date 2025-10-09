@@ -1,4 +1,5 @@
 import torch
+from torch.nn.utils.rnn import pad_sequence
 
 
 def collate_fn(dataset_items: list[dict]):
@@ -13,5 +14,32 @@ def collate_fn(dataset_items: list[dict]):
         result_batch (dict[Tensor]): dict, containing batch-version
             of the tensors.
     """
+    result_batch = dict()
+    for k in dataset_items[0].keys():
+        result_batch[k] = []
+    result_batch['spectrogram_length'] = []
+    result_batch['text_encoded_length'] = []
+    for el in dataset_items:
+        for k, v in el.items():
+            if k in result_batch.keys():
+                if k in ['audio', 'text', 'audio_path']:
+                    result_batch[k].append(v)
+                else:
+                    dv = v.squeeze(0)
+                    if k == 'spectrogram':
+                        dv.permute(1, 0)
+                    result_batch[k + '_length'].append(dv.size(dim=0))
+                    result_batch[k].append(dv)
+        
 
-    pass  # TODO
+    for k in result_batch:
+        if k in ['text', 'audio_path']:
+            continue
+        if k != 'spectrogram_length' and k != 'text_encoded_length':
+            result_batch[k] = pad_sequence(result_batch[k], batch_first=True)
+            if k == 'spectrogram':
+                result_batch[k].permute(0, 2, 1)
+        else:
+            result_batch[k] = torch.Tensor(result_batch[k]).long()
+
+    return result_batch
