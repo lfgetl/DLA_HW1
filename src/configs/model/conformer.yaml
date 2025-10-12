@@ -1,0 +1,7 @@
+_target_: src.model.ConformerModel
+n_feats: 128
+encoder_dim: 512
+n_blocks: 16
+kernel_size: 32
+n_heads: 16
+p: 0.1

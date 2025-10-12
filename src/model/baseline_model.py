@@ -2,12 +2,122 @@ from torch import nn
 from torch.nn import Sequential
 
 
-class BaselineModel(nn.Module):
+class FeedForwardModule(nn.Module):
+    def __init__(self, n_feats, expansion=4, p=0.1):
+        super().__init__()
+
+        self.seq = Sequential(
+            nn.LayerNorm(n_feats),
+            nn.Linear(in_features=n_feats, out_features=expansion * n_feats),
+            nn.SiLU(),  # swish
+            nn.Dropout(p),
+            nn.Linear(in_features=expansion * n_feats, out_features=n_feats),
+            nn.Dropout(p),
+        )
+
+    def forward(self, input):
+        return self.seq(input)
+
+
+class ConvModule(nn.Module):
+    def __init__(self, n_feats, kernel_size, p=0.1):
+        super().__init__()
+
+        self.seq = Sequential(
+            nn.LayerNorm(n_feats),
+            nn.nn.Conv1d(
+                in_channels=n_feats, out_channels=n_feats * 2, kernel_size=1
+            ),  # bc this is pointwise conv
+            nn.GLU(),
+            nn.Conv1d(
+                in_channels=n_feats,
+                out_channels=n_feats,
+                kernel_size=kernel_size,
+                padding="same",
+                groups=n_feats,
+            ),
+            nn.BatchNorm1d(num_features=n_feats, affine=False),
+            nn.SiLu(),
+            nn.Conv1d(in_channels=n_feats, out_channels=n_feats, kernel_size=1),
+            nn.Dropout(p),
+        )
+
+    def forward(self, input):
+        return self.seq(input)
+
+
+class MHSA(nn.Module):
+    def __init__(self, n_feats, n_heads=16, p=0.1):
+        super().__init__()
+
+        self.seq = Sequential(
+            nn.LayerNorm(n_feats),
+            nn.MultiheadAttention(embed_dim=n_feats, num_heads=n_heads, dropout=p),
+        )
+
+    def forward(self, input):
+        return self.seq(input)
+
+
+class ConfBlock(nn.module):
+    def __init__(
+        self,
+        n_feats,
+        n_heads=16,
+        kernel_size=32,
+        p=0.1,
+        expansion=4,
+    ):
+        super().__init__()
+
+        self.ff = FeedForwardModule(n_feats=n_feats, expansion=expansion, p=p)
+        self.conv = ConvModule(n_feats=n_feats, kernel_size=kernel_size, p=p)
+        self.mhsa = MHSA(n_feats=n_feats, n_heads=n_heads, p=p)
+        self.layernorm = nn.LayerNorm(n_feats)
+
+    def forward(self, input):
+        res = input + self.ff(input) * 0.5
+        res += self.mhsa(res)
+        res += self.conv(res)
+        res += 0.5 * self.ff(res)
+        return self.layernorm(res)
+
+
+class Conv2dSubsampling(nn.Module):
+    def __init__(self, in_channels: int, out_channels: int):
+        super().__init__()
+        self.sequential = nn.Sequential(
+            nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=2),
+            nn.ReLU(),
+            nn.Conv2d(out_channels, out_channels, kernel_size=3, stride=2),
+            nn.ReLU(),
+        )
+
+    def forward(self, input):
+        output = self.sequential(input.unsqueeze(1))
+        batch_size, channels, subsampled_lengths, sumsampled_dim = output.size()
+
+        output = output.permute(0, 2, 1, 3)
+        output = output.view(batch_size, subsampled_lengths, channels * sumsampled_dim)
+
+        return output
+
+
+class ConformerModel(nn.Module):
     """
-    Simple MLP
+    Conformer
     """
 
-    def __init__(self, n_feats, n_tokens, fc_hidden=512):
+    def __init__(
+        self,
+        n_feats,
+        encoder_dim,
+        n_tokens,
+        n_blocks=16,
+        kernel_size=32,
+        n_heads=16,
+        p=0.1,
+    ):
         """
         Args:
             n_feats (int): number of input features.
@@ -16,14 +126,22 @@ class BaselineModel(nn.Module):
         """
         super().__init__()
 
-        self.net = Sequential(
-            # people say it can approximate any function...
-            nn.Linear(in_features=n_feats, out_features=fc_hidden),
-            nn.ReLU(),
-            nn.Linear(in_features=fc_hidden, out_features=fc_hidden),
-            nn.ReLU(),
-            nn.Linear(in_features=fc_hidden, out_features=n_tokens),
+        self.subsample = Conv2dSubsampling(in_channels=1, out_channels=encoder_dim)
+        self.linear = nn.Linear(
+            encoder_dim * (((n_feats - 1) // 2 - 1) // 2), encoder_dim
         )
+        self.dropout = nn.Dropout(p)
+
+        self.layers = nn.ModuleList(
+            [
+                ConfBlock(
+                    n_feats=encoder_dim, n_heads=n_heads, kernel_size=kernel_size, p=p
+                )
+                for _ in range(n_blocks)
+            ]
+        )
+
+        self.dec = nn.Linear(encoder_dim, n_tokens)
 
     def forward(self, spectrogram, spectrogram_length, **batch):
         """
@@ -36,7 +154,15 @@ class BaselineModel(nn.Module):
             output (dict): output dict containing log_probs and
                 transformed lengths.
         """
-        output = self.net(spectrogram.transpose(1, 2))
+        output = self.subsample(spectrogram.transpose(1, 2))
+        output = self.linear(output)
+        output = self.dropout(output)
+
+        for layer in self.layers:
+            output = layer(output)
+
+        output = self.dec(output)
+
         log_probs = nn.functional.log_softmax(output, dim=-1)
         log_probs_length = self.transform_input_lengths(spectrogram_length)
         return {"log_probs": log_probs, "log_probs_length": log_probs_length}
