@@ -112,9 +112,9 @@ class ConformerModel(nn.Module):
         super().__init__()
 
         self.subsample = nn.Conv2d(
-            in_channels=1, out_channels=encoder_dim, kernel_size=(2, 1), stride=(2, 1)
+            in_channels=1, out_channels=1, kernel_size=(2, 1), stride=(2, 1)
         )
-        self.linear = nn.Linear(encoder_dim * (n_feats >> 2 - 1), encoder_dim)
+        self.linear = nn.Linear(n_feats, encoder_dim)
         self.dropout = nn.Dropout(p)
 
         self.layers = nn.ModuleList(
