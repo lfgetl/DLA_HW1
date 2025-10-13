@@ -23,12 +23,12 @@ class ConvModule(nn.Module):
     def __init__(self, n_feats, kernel_size, p=0.1):
         super().__init__()
 
+        self.ln = nn.LayerNorm(n_feats)
         self.seq = Sequential(
-            nn.LayerNorm(n_feats),
-            nn.nn.Conv1d(
+            nn.Conv1d(
                 in_channels=n_feats, out_channels=n_feats * 2, kernel_size=1
             ),  # bc this is pointwise conv
-            nn.GLU(),
+            nn.GLU(dim=1),
             nn.Conv1d(
                 in_channels=n_feats,
                 out_channels=n_feats,
@@ -37,29 +37,34 @@ class ConvModule(nn.Module):
                 groups=n_feats,
             ),
             nn.BatchNorm1d(num_features=n_feats, affine=False),
-            nn.SiLu(),
+            nn.SiLU(),
             nn.Conv1d(in_channels=n_feats, out_channels=n_feats, kernel_size=1),
             nn.Dropout(p),
         )
 
     def forward(self, input):
-        return self.seq(input)
+        output = self.ln(input)
+        output = output.transpose(1, 2)
+        return self.seq(output).transpose(1, 2)
 
 
 class MHSA(nn.Module):
     def __init__(self, n_feats, n_heads=16, p=0.1):
         super().__init__()
 
-        self.seq = Sequential(
-            nn.LayerNorm(n_feats),
-            nn.MultiheadAttention(embed_dim=n_feats, num_heads=n_heads, dropout=p),
+        self.ln = nn.LayerNorm(n_feats)
+        self.attention = nn.MultiheadAttention(
+            embed_dim=n_feats, num_heads=n_heads, dropout=p, batch_first=True
         )
 
     def forward(self, input):
-        return self.seq(input)
+        output = self.ln(input)
+        output, _ = self.attention(output, output, output, need_weights=False)
+
+        return output
 
 
-class ConfBlock(nn.module):
+class ConfBlock(nn.Module):
     def __init__(
         self,
         n_feats,
@@ -76,11 +81,11 @@ class ConfBlock(nn.module):
         self.layernorm = nn.LayerNorm(n_feats)
 
     def forward(self, input):
-        res = input + self.ff(input) * 0.5
-        res += self.mhsa(res)
-        res += self.conv(res)
-        res += 0.5 * self.ff(res)
-        return self.layernorm(res)
+        res1 = input + self.ff(input) * 0.5
+        res2 = res1 + self.mhsa(res1)
+        res3 = res2 + self.conv(res2)
+        res4 = res3 + 0.5 * self.ff(res3)
+        return self.layernorm(res4)
 
 
 class Conv2dSubsampling(nn.Module):
@@ -98,7 +103,9 @@ class Conv2dSubsampling(nn.Module):
         batch_size, channels, subsampled_lengths, sumsampled_dim = output.size()
 
         output = output.permute(0, 2, 1, 3)
-        output = output.view(batch_size, subsampled_lengths, channels * sumsampled_dim)
+        output = output.reshape(
+            (batch_size, subsampled_lengths, channels * sumsampled_dim)
+        )
 
         return output
 
@@ -141,7 +148,7 @@ class ConformerModel(nn.Module):
             ]
         )
 
-        self.dec = nn.Linear(encoder_dim, n_tokens)
+        # self.dec = nn.Linear(encoder_dim, n_tokens)
 
     def forward(self, spectrogram, spectrogram_length, **batch):
         """
@@ -161,7 +168,7 @@ class ConformerModel(nn.Module):
         for layer in self.layers:
             output = layer(output)
 
-        output = self.dec(output)
+        # output = self.dec(output)
 
         log_probs = nn.functional.log_softmax(output, dim=-1)
         log_probs_length = self.transform_input_lengths(spectrogram_length)
@@ -177,7 +184,7 @@ class ConformerModel(nn.Module):
         Returns:
             output_lengths (Tensor): new temporal lengths
         """
-        return input_lengths  # we don't reduce time dimension here
+        return ((input_lengths - 1) // 2 - 1) // 2  # actually subsampling reduces
 
     def __str__(self):
         """
