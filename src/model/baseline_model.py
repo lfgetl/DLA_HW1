@@ -88,28 +88,6 @@ class ConfBlock(nn.Module):
         return self.layernorm(res4)
 
 
-class Conv2dSubsampling(nn.Module):
-    def __init__(self, in_channels: int, out_channels: int):
-        super().__init__()
-        self.sequential = nn.Sequential(
-            nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=2),
-            nn.ReLU(),
-            nn.Conv2d(out_channels, out_channels, kernel_size=3, stride=2),
-            nn.ReLU(),
-        )
-
-    def forward(self, input):
-        output = self.sequential(input.unsqueeze(1))
-        batch_size, channels, subsampled_lengths, sumsampled_dim = output.size()
-
-        output = output.permute(0, 2, 1, 3)
-        output = output.reshape(
-            (batch_size, subsampled_lengths, channels * sumsampled_dim)
-        )
-
-        return output
-
-
 class ConformerModel(nn.Module):
     """
     Conformer
@@ -133,7 +111,9 @@ class ConformerModel(nn.Module):
         """
         super().__init__()
 
-        self.subsample = Conv2dSubsampling(in_channels=1, out_channels=encoder_dim)
+        self.subsample = nn.Conv2d(
+            in_channels=1, out_channels=encoder_dim, kernel_size=(2, 1), stride=(2, 1)
+        )
         self.linear = nn.Linear(encoder_dim * (n_feats >> 2 - 1), encoder_dim)
         self.dropout = nn.Dropout(p)
 
@@ -159,7 +139,7 @@ class ConformerModel(nn.Module):
             output (dict): output dict containing log_probs and
                 transformed lengths.
         """
-        output = self.subsample(spectrogram.transpose(1, 2))
+        output = self.subsample(spectrogram.transpose(1, 2).unsqueeze(1)).squeeze(1)
         output = self.linear(output)
         output = self.dropout(output)
 
@@ -182,7 +162,7 @@ class ConformerModel(nn.Module):
         Returns:
             output_lengths (Tensor): new temporal lengths
         """
-        return input_lengths >> 2 - 1  # actually subsampling reduces
+        return input_lengths // 2  # actually subsampling reduces
 
     def __str__(self):
         """
