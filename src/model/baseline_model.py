@@ -134,9 +134,7 @@ class ConformerModel(nn.Module):
         super().__init__()
 
         self.subsample = Conv2dSubsampling(in_channels=1, out_channels=encoder_dim)
-        self.linear = nn.Linear(
-            encoder_dim * (((n_feats - 1) // 2 - 1) // 2), encoder_dim
-        )
+        self.linear = nn.Linear(encoder_dim * (n_feats >> 2 - 1), encoder_dim)
         self.dropout = nn.Dropout(p)
 
         self.layers = nn.ModuleList(
@@ -184,7 +182,7 @@ class ConformerModel(nn.Module):
         Returns:
             output_lengths (Tensor): new temporal lengths
         """
-        return ((input_lengths - 1) // 2 - 1) // 2  # actually subsampling reduces
+        return input_lengths >> 2 - 1  # actually subsampling reduces
 
     def __str__(self):
         """
