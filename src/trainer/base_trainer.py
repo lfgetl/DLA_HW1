@@ -28,6 +28,8 @@ class BaseTrainer:
         dataloaders,
         logger,
         writer,
+        beam_size=0,
+        beam_search=False,
         epoch_len=None,
         skip_oom=True,
         batch_transforms=None,
@@ -74,6 +76,8 @@ class BaseTrainer:
         self.lr_scheduler = lr_scheduler
         self.text_encoder = text_encoder
         self.batch_transforms = batch_transforms
+        self.beam_search = beam_search
+        self.beam_size = beam_size
 
         # define dataloaders
         self.train_dataloader = dataloaders["train"]
@@ -175,7 +179,7 @@ class BaseTrainer:
 
             # print logged information to the screen
             for key, value in logs.items():
-                self.logger.info(f"    {key:15s}: {value}")
+                self.logger.info(f"    {key: 15s}: {value}")
 
             # evaluate model performance according to configured metric,
             # save best checkpoint as model_best
