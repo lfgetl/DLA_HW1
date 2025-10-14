@@ -4,7 +4,7 @@ import pandas as pd
 
 from src.logger.utils import plot_spectrogram
 from src.metrics.tracker import MetricTracker
-from src.metrics.utils import calc_cer, calc_wer, ctc_beam_search
+from src.metrics.utils import calc_cer, calc_wer
 from src.trainer.base_trainer import BaseTrainer
 
 
@@ -95,22 +95,11 @@ class Trainer(BaseTrainer):
         # TODO add beam search
         # Note: by improving text encoder and metrics design
         # this logging can also be improved significantly
-        if not self.beam_search:
-            argmax_inds = log_probs.cpu().argmax(-1).numpy()
-            argmax_inds = [
-                inds[: int(ind_len)]
-                for inds, ind_len in zip(argmax_inds, log_probs_length.numpy())
-            ]
-        else:
-            argmax_inds = ctc_beam_search(
-                log_probs, self.beam_size, self.text_encoder.ind2char, ""
-            )
-            argmax_inds = [
-                inds[: int(ind_len)]
-                for inds, ind_len in zip(
-                    list(x[0] for x in argmax_inds.keys()), log_probs_length.numpy()
-                )
-            ]
+        argmax_inds = log_probs.cpu().argmax(-1).numpy()
+        argmax_inds = [
+            inds[: int(ind_len)]
+            for inds, ind_len in zip(argmax_inds, log_probs_length.numpy())
+        ]
         argmax_texts_raw = [self.text_encoder.decode(inds) for inds in argmax_inds]
         argmax_texts = [self.text_encoder.ctc_decode(inds) for inds in argmax_inds]
         tuples = list(zip(argmax_texts, text, argmax_texts_raw, audio_path))

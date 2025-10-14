@@ -1,7 +1,7 @@
 _target_: src.logger.CometMLWriter
 project_name: "dla-hw1"
 workspace: null
-run_name: "baseline"
+run_name: "baseline_beamsearch"
 mode: "online"
 loss_names: ["loss"] # which losses to log (useful for multi-loss tasks, s.a. GANs)
 log_checkpoints: True # set to True if you want to log save_dir with checkpoints to W&B
