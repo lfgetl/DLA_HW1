@@ -14,13 +14,13 @@ import torch
 class CTCTextEncoder:
     EMPTY_TOK = ""
 
-    def __init__(self, alphabet=None, beam_search=None, **kwargs):
+    def __init__(self, alphabet=None, beam_size=None, **kwargs):
         """
         Args:
             alphabet (list): alphabet for language. If None, it will be
                 set to ascii
         """
-        self.beam_search = None
+        self.beam_size = None
         if alphabet is None:
             alphabet = list(ascii_lowercase + " ")
 
