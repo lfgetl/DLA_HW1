@@ -83,7 +83,7 @@ def expand_and_merge_beams(dp, cur_step_prob, ind2char, EMPTY_TOK):
 
     for (pref, prev_char), pref_proba in dp.items():
         for idx, char in ind2char.items():
-            cur_proba = pref_proba + cur_step_prob[idx]
+            cur_proba = pref_proba * cur_step_prob[idx]
             cur_char = char
 
             if char == EMPTY_TOK:
@@ -107,7 +107,7 @@ def ctc_beam_search(probs, beam_size, ind2char, EMPTY_TOK):
         ("", EMPTY_TOK): 1.0,
     }
 
-    for cur_step_prob in probs:
+    for cur_step_prob in probs.exp():
         dp = expand_and_merge_beams(dp, cur_step_prob, ind2char, EMPTY_TOK)
         dp = truncate_beams(dp, beam_size)
     return dp

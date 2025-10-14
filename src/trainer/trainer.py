@@ -107,7 +107,7 @@ class Trainer(BaseTrainer):
         else:
             probs = [
                 p[: int(p_len)] for p, p_len in zip(log_probs, log_probs_length.numpy())
-            ]
+            ][:examples_to_log]
             pred_texts_raw = [self.text_encoder.decode(p) for p in probs]
             pred_texts = [self.text_encoder.ctc_decode(p) for p in probs]
             tuples = list(zip(pred_texts, text, pred_texts_raw, audio_path))

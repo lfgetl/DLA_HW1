@@ -20,7 +20,7 @@ loss_function:
   _target_: src.loss.CTCLossWrapper
 text_encoder:
   _target_: src.text_encoder.BeamSearchEncoder
-  beam_size: 10
+  beam_size: 20
 trainer:
   log_step: 50
   n_epochs: 50
