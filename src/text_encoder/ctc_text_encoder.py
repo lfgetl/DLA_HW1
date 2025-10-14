@@ -14,7 +14,7 @@ import torch
 class CTCTextEncoder:
     EMPTY_TOK = ""
 
-    def __init__(self, alphabet=None, **kwargs):
+    def __init__(self, alphabet=None, beam_search=None, **kwargs):
         """
         Args:
             alphabet (list): alphabet for language. If None, it will be
@@ -83,7 +83,7 @@ def expand_and_merge_beams(dp, cur_step_prob, ind2char, EMPTY_TOK):
 
     for (pref, prev_char), pref_proba in dp.items():
         for idx, char in ind2char.items():
-            cur_proba = pref_proba * cur_step_prob[idx]
+            cur_proba = pref_proba + cur_step_prob[idx]
             cur_char = char
 
             if char == EMPTY_TOK:
@@ -98,7 +98,8 @@ def expand_and_merge_beams(dp, cur_step_prob, ind2char, EMPTY_TOK):
 
 
 def truncate_beams(dp, beam_size):
-    return sorted(list(dp.items()), key=lambda x: -x[1])[:beam_size]
+    srt = sorted(list(dp.items()), key=lambda x: -x[1])[:beam_size]
+    return {tup: prob for tup, prob in srt}
 
 
 def ctc_beam_search(probs, beam_size, ind2char, EMPTY_TOK):
@@ -115,13 +116,13 @@ def ctc_beam_search(probs, beam_size, ind2char, EMPTY_TOK):
 class BeamSearchEncoder:
     EMPTY_TOK = ""
 
-    def __init__(self, alphabet=None, **kwargs):
+    def __init__(self, alphabet=None, beam_size=None, **kwargs):
         """
         Args:
             alphabet (list): alphabet for language. If None, it will be
                 set to ascii
         """
-        self.beam_size = kwargs.get("beam_size", 3)
+        self.beam_size = beam_size
 
         if alphabet is None:
             alphabet = list(ascii_lowercase + " ")
@@ -149,20 +150,20 @@ class BeamSearchEncoder:
                 f"Can't encode text '{text}'. Unknown chars: '{' '.join(unknown_chars)}'"
             )
 
-    def decode(self, inds) -> str:
+    def decode(self, probs) -> str:
         """
-        Raw decoding without CTC.
-        Used to validate the CTC decoding implementation.
-
-        Args:
-            inds (list): list of tokens.
-        Returns:
-            raw_text (str): raw text with empty tokens and repetitions.
+        Raw decoding is the same as beam search
         """
-        return "".join([self.ind2char[int(ind)] for ind in inds]).strip()
+        return self.ctc_decode(probs)
 
     def ctc_decode(self, probs) -> str:
-        return ctc_beam_search(probs, self.beam_size, self.ind2char, EMPTY_TOK="")[0][0]
+        return sorted(
+            list(
+                ctc_beam_search(
+                    probs, self.beam_size, self.ind2char, EMPTY_TOK=""
+                ).items()
+            )
+        )[-1][0][0]
 
     @staticmethod
     def normalize_text(text: str):
