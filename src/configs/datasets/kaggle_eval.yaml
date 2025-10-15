@@ -8,10 +8,8 @@ train:
 val:
   _target_: src.datasets.LibrispeechDataset
   part: "dev-clean"
-  data_dir: "/kaggle/input/librispeech/dev-clean"
   instance_transforms: ${transforms.instance_transforms.inference}
 test:
   _target_: src.datasets.LibrispeechDataset
   part: "test-clean"
-  data_dir: "/kaggle/input/librispeech/test-clean"
   instance_transforms: ${transforms.instance_transforms.inference}
