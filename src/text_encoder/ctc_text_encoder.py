@@ -34,9 +34,9 @@ class CTCTextEncoder:
             )
             with open(files.tokens, "r") as file:
                 self.vocab = [s.strip() for s in file.readlines()]
-
-        if alphabet is None:
-            self.alphabet = list(ascii_lowercase + " ")
+        else:
+            if alphabet is None:
+                self.alphabet = list(ascii_lowercase + " ")
             self.vocab = [self.EMPTY_TOK] + list(self.alphabet)
 
         self.ind2char = dict(enumerate(self.vocab))
