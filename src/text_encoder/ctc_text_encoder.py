@@ -98,11 +98,13 @@ class CTCTextEncoder:
 
 def expand_and_merge_beams(dp, cur_step_prob, ind2char, EMPTY_TOK, beam_size):
     new_dp = defaultdict(float)
-    topk = torch.topk(cur_step_prob, k=beam_size)
+    topk_vals, topk_inds = torch.topk(cur_step_prob, k=beam_size, dim=-1)
     for (pref, prev_char), pref_proba in dp.items():
-        for idx in topk.indices.tolist():
+        for idx, val in zip(topk_inds.tolist(), topk_vals.tolist()):
+            if idx not in ind2char:
+                continue
             char = ind2char[idx]
-            cur_proba = pref_proba + cur_step_prob[idx]
+            cur_proba = pref_proba + val
             cur_char = char
 
             if char == EMPTY_TOK:
