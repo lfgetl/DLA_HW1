@@ -76,7 +76,7 @@ class CTCTextEncoder:
 
     def ctc_decode(self, probs) -> str:
         if self.lm_name is not None:
-            return " ".join(self.decoder(probs.cpu())[0][0].words)
+            return " ".join(self.decoder(probs.unsqueeze(0).cpu())[0][0].words)
         inds = probs.cpu().argmax(-1).numpy()
         prev_ind = None
         res = ""
