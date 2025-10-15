@@ -1,7 +1,7 @@
 defaults:
   - model: conformer
   - writer: cometml_beamsearch
-  - metrics: beam_search
+  - metrics: example
   - datasets: kaggle_eval
   - dataloader: onebatch
   - transforms: example_only_instance
