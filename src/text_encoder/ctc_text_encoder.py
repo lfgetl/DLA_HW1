@@ -21,12 +21,16 @@ class CTCTextEncoder:
             alphabet (list): alphabet for language. If None, it will be
                 set to ascii
         """
-        self.beam_size = None
+        self.beam_size = beam_size
         self.lm_name = lm_name
         if self.lm_name is not None:
             files = download_pretrained_files(lm_name)
             self.decoder = ctc_decoder(
-                lexicon=files.lexicon, tokens=files.tokens, lm=files.lm, nbest=1
+                lexicon=files.lexicon,
+                tokens=files.tokens,
+                lm=files.lm,
+                nbest=1,
+                beam_size=beam_size,
             )
         if alphabet is None:
             alphabet = list(ascii_lowercase + " ")

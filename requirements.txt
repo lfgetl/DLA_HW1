@@ -17,3 +17,5 @@ pre-commit
 
 editdistance
 wget
+flashlight-text
+git+https://github.com/kpu/kenlm.git
