@@ -32,14 +32,19 @@ class CTCTextEncoder:
                 nbest=1,
                 beam_size=beam_size,
             )
-        if alphabet is None:
-            alphabet = list(ascii_lowercase + " ")
+            with open(files.tokens, "r") as file:
+                self.vocab = [s.strip() for s in file.readlines()]
 
-        self.alphabet = alphabet
-        self.vocab = [self.EMPTY_TOK] + list(self.alphabet)
+        if alphabet is None:
+            self.alphabet = list(ascii_lowercase + " ")
+            self.vocab = [self.EMPTY_TOK] + list(self.alphabet)
 
         self.ind2char = dict(enumerate(self.vocab))
         self.char2ind = {v: k for k, v in self.ind2char.items()}
+        if self.lm_name is not None:
+            self.char2ind[" "] = self.char2ind["|"]
+            self.ind2char[self.char2ind[" "]] = " "
+            self.ind2char[self.char2ind["-"]] = ""
 
     def __len__(self):
         return len(self.vocab)
