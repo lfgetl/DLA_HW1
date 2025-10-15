@@ -34,4 +34,4 @@ trainer:
   early_stop: ${trainer.n_epochs} # epochs for early stopping
   save_dir: "saved_beamsearch"
   seed: 1
-  from_pretrained: "saved/model_best.pth"
+  from_pretrained: "saved/checkpoints/model_best.pth"
