@@ -3,6 +3,7 @@ from collections import defaultdict
 from string import ascii_lowercase
 
 import torch
+from torchaudio.models.decoder import ctc_decoder, download_pretrained_files
 
 # TODO add CTC decode
 # TODO add BPE, LM, Beam Search support
@@ -14,13 +15,19 @@ import torch
 class CTCTextEncoder:
     EMPTY_TOK = ""
 
-    def __init__(self, alphabet=None, beam_size=None, **kwargs):
+    def __init__(self, alphabet=None, lm_name=None, beam_size=None, **kwargs):
         """
         Args:
             alphabet (list): alphabet for language. If None, it will be
                 set to ascii
         """
         self.beam_size = None
+        self.lm_name = lm_name
+        if self.lm_name is not None:
+            files = download_pretrained_files(lm_name)
+            self.decoder = ctc_decoder(
+                lexicon=files.lexicon, tokens=files.tokens, lm=files.lm, nbest=1
+            )
         if alphabet is None:
             alphabet = list(ascii_lowercase + " ")
 
@@ -47,7 +54,7 @@ class CTCTextEncoder:
                 f"Can't encode text '{text}'. Unknown chars: '{' '.join(unknown_chars)}'"
             )
 
-    def decode(self, inds) -> str:
+    def decode(self, probs) -> str:
         """
         Raw decoding without CTC.
         Used to validate the CTC decoding implementation.
@@ -57,9 +64,16 @@ class CTCTextEncoder:
         Returns:
             raw_text (str): raw text with empty tokens and repetitions.
         """
-        return "".join([self.ind2char[int(ind)] for ind in inds]).strip()
+        if self.lm_name is None:
+            inds = probs.cpu().argmax(-1).numpy()
+            return "".join([self.ind2char[int(ind)] for ind in inds]).strip()
+        else:
+            return self.ctc_decode(probs)
 
-    def ctc_decode(self, inds) -> str:
+    def ctc_decode(self, probs) -> str:
+        if self.lm_name is not None:
+            return " ".join(self.decoder(probs.cpu())[0][0].words)
+        inds = probs.cpu().argmax(-1).numpy()
         prev_ind = None
         res = ""
         for ind in inds:
@@ -78,12 +92,14 @@ class CTCTextEncoder:
         return text
 
 
-def expand_and_merge_beams(dp, cur_step_prob, ind2char, EMPTY_TOK):
+def expand_and_merge_beams(dp, cur_step_prob, ind2char, EMPTY_TOK, beam_size):
     new_dp = defaultdict(float)
-
+    srtd_step_prob = dict(
+        sorted(cur_step_prob.items(), key=lambda x: -x[1])[:beam_size]
+    )
     for (pref, prev_char), pref_proba in dp.items():
         for idx, char in ind2char.items():
-            cur_proba = pref_proba + cur_step_prob[idx]
+            cur_proba = pref_proba + srtd_step_prob[idx]
             cur_char = char
 
             if char == EMPTY_TOK:
@@ -108,7 +124,7 @@ def ctc_beam_search(probs, beam_size, ind2char, EMPTY_TOK):
     }
 
     for cur_step_prob in probs:
-        dp = expand_and_merge_beams(dp, cur_step_prob, ind2char, EMPTY_TOK)
+        dp = expand_and_merge_beams(dp, cur_step_prob, ind2char, EMPTY_TOK, beam_size)
         dp = truncate_beams(dp, beam_size)
     return dp
 

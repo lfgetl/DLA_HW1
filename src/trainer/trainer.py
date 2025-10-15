@@ -95,22 +95,14 @@ class Trainer(BaseTrainer):
         # TODO add beam search
         # Note: by improving text encoder and metrics design
         # this logging can also be improved significantly
+        probs = [
+            p[: int(p_len)] for p, p_len in zip(log_probs, log_probs_length.numpy())
+        ]
         if self.text_encoder.beam_size is None:
-            argmax_inds = log_probs.cpu().argmax(-1).numpy()
-            argmax_inds = [
-                inds[: int(ind_len)]
-                for inds, ind_len in zip(argmax_inds, log_probs_length.numpy())
-            ]
-            argmax_texts_raw = [self.text_encoder.decode(inds) for inds in argmax_inds]
-            argmax_texts = [self.text_encoder.ctc_decode(inds) for inds in argmax_inds]
-            tuples = list(zip(argmax_texts, text, argmax_texts_raw, audio_path))
-        else:
-            probs = [
-                p[: int(p_len)] for p, p_len in zip(log_probs, log_probs_length.numpy())
-            ][:examples_to_log]
-            pred_texts_raw = [self.text_encoder.decode(p) for p in probs]
-            pred_texts = [self.text_encoder.ctc_decode(p) for p in probs]
-            tuples = list(zip(pred_texts, text, pred_texts_raw, audio_path))
+            probs = probs[:examples_to_log]
+        pred_texts_raw = [self.text_encoder.decode(p) for p in probs]
+        pred_texts = [self.text_encoder.ctc_decode(p) for p in probs]
+        tuples = list(zip(pred_texts, text, pred_texts_raw, audio_path))
 
         rows = {}
         for pred, target, raw_pred, audio_path in tuples[:examples_to_log]:
