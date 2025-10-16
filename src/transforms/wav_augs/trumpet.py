@@ -8,17 +8,22 @@ class Trumpet(nn.Module):
     def __init__(self, level=20):
         super().__init__()
         filename = librosa.ex("trumpet")
-        self.noise, self.sr = librosa.load(filename)
-        self.level = Tensor([level])
+        noise, _ = librosa.load(filename)
+        self.noise = torch.from_numpy(noise)
+        self.level = level
 
     def __call__(self, data: Tensor):
-        noize_energy = torch.norm(torch.from_numpy(self.noise))
+        noise = self.noise.to(data.device)
+        if noise.shape[-1] < data.shape[-1]:
+            rep = data.shape[-1] // noise.shape[-1] + 1
+            noise = noise.repeat(rep)[... : data.shape[-1]]
+        else:
+            noise = noise[... : data.shape[-1]]
+        noize_energy = torch.norm(noise)
         audio_energy = torch.norm(data)
 
-        alpha = (audio_energy / noize_energy) * torch.pow(self.level / 20)
+        alpha = (audio_energy / noize_energy) * (10 ** (-self.level / 20))
 
-        clipped_wav = data[..., : self.noise.shape[0]]
-
-        augumented_wav = clipped_wav + alpha * torch.from_numpy(self.noise)
+        augumented_wav = data + alpha * noise
 
         return torch.clamp(augumented_wav, -1, 1)
