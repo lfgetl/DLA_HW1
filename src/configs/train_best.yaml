@@ -20,6 +20,8 @@ loss_function:
   _target_: src.loss.CTCLossWrapper
 text_encoder:
   _target_: src.text_encoder.CTCTextEncoder
+  lm_name: "librispeech-3-gram"
+  beam_size: 10
 trainer:
   log_step: 250
   n_epochs: 50
