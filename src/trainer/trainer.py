@@ -79,12 +79,12 @@ class Trainer(BaseTrainer):
         # logging scheme might be different for different partitions
         if mode == "train":  # the method is called only every self.log_step steps
             self.log_spectrogram(**batch)
-        else:
-            # Log Stuff
             self.writer.add_audio("old_audio", batch["old_audio"][0], sample_rate=16000)
             self.writer.add_audio(
                 "augmented_audio", batch["audio"][0], sample_rate=16000
             )
+        else:
+            # Log Stuff
             self.log_spectrogram(**batch)
             self.log_predictions(**batch)
 
