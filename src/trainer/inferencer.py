@@ -138,24 +138,21 @@ class Inferencer(BaseTrainer):
 
         batch_size = batch["logits"].shape[0]
         current_id = batch_idx * batch_size
-
+        if self.save_path is not None:
+            (self.save_path / part).mkdir(exist_ok=True, parents=True)
+            predictions_file = self.save_path / part / "predictions.txt"
         for i in range(batch_size):
             # clone because of
             # https://github.com/pytorch/pytorch/issues/1995
-            logits = batch["logits"][i].clone()
-            label = batch["labels"][i].clone()
-            pred_label = logits.argmax(dim=-1)
-
+            log_probs = batch["log_probs"][i].clone()
+            text = batch["text"][i].clone()
+            pred_text = self.text_encoder.ctc_decode(log_probs)
             output_id = current_id + i
 
-            output = {
-                "pred_label": pred_label,
-                "label": label,
-            }
-
             if self.save_path is not None:
-                # you can use safetensors or other lib here
-                torch.save(output, self.save_path / part / f"output_{output_id}.pth")
+                with open(predictions_file, "a") as f:
+                    f.write(f"{output_id}\t{text}\t{pred_text}\n")
+                # torch.save(output, self.save_path / part / f"output_{output_id}.pth")
 
         return batch
 
