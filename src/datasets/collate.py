@@ -18,7 +18,10 @@ def collate_fn(dataset_items: list[dict]):
     for k in ["text", "audio_path"]:
         result_batch[k] = [elem[k] for elem in dataset_items]
     result_batch["audio"] = [elem["audio"].squeeze(0) for elem in dataset_items]
-    result_batch["old_audio"] = [elem["old_audio"].squeeze(0) for elem in dataset_items]
+    if "old_audio" in dataset_items[0]:
+        result_batch["old_audio"] = [
+            elem["old_audio"].squeeze(0) for elem in dataset_items
+        ]
     result_batch["spectrogram"] = pad_sequence(
         [elem["spectrogram"].squeeze(0).permute(1, 0) for elem in dataset_items],
         batch_first=True,
