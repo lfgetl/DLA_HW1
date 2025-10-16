@@ -68,6 +68,16 @@ To run inference (evaluate the model or save predictions):
 python3 inference.py HYDRA_CONFIG_ARGUMENTS
 ```
 
+To download best model:
+```bash
+python3 download_best_model.py
+```
+
+To run metrics on prediction (formatted id\tground_truth\tpredictiontext\n in .txt file):
+```bash
+python3 calc_metrics.py [path to file]
+```
+
 ## Credits
 
 This repository is based on a [PyTorch Project Template](https://github.com/Blinorot/pytorch_project_template).
