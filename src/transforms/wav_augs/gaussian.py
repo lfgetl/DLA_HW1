@@ -8,4 +8,4 @@ class Gaussian(nn.Module):
         self._aug = distributions.Normal(mean, var)
 
     def __call__(self, data: Tensor):
-        return data + self._aug(data.size())
+        return data + self._aug.sample(data.size())
