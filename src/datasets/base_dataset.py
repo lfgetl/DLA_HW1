@@ -151,6 +151,8 @@ class BaseDataset(Dataset):
                     or transform_name == "spectrogram"
                 ):  # only wav
                     continue  # skip special key
+                if transform_name == "audio":
+                    instance_data["old_audio"] = instance_data["audio"].clone()
                 instance_data[transform_name] = self.instance_transforms[
                     transform_name
                 ](instance_data[transform_name])
