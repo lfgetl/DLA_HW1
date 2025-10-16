@@ -81,8 +81,10 @@ class Trainer(BaseTrainer):
             self.log_spectrogram(**batch)
         else:
             # Log Stuff
-            self.writer.add_audio("old_audio", batch["old_audio"][0])
-            self.writer.add_audio("augmented_audio", batch["audio"][0])
+            self.writer.add_audio("old_audio", batch["old_audio"][0], sample_rate=16000)
+            self.writer.add_audio(
+                "augmented_audio", batch["audio"][0], sample_rate=16000
+            )
             self.log_spectrogram(**batch)
             self.log_predictions(**batch)
 
