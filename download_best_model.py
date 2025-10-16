@@ -3,7 +3,9 @@ from pathlib import Path
 
 import wget
 
-LINK = ""
+LINK = (
+    "https://drive.google.com/uc?export=download&id=1MP1Gt6OMT-PIvkPFDuYUGkGdXUM_n-tv"
+)
 
 
 def download_best_model():
