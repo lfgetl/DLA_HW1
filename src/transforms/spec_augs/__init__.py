@@ -1,1 +1,1 @@
-from src.transforms.spec_augs import SpecAug
+from src.transforms.spec_augs.spec_aug import SpecAug
