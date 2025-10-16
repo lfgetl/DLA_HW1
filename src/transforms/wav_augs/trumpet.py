@@ -4,7 +4,7 @@ import torchaudio
 from torch import Tensor, nn
 
 
-class Bedroom(nn.Module):
+class Trumpet(nn.Module):
     def __init__(self, level=20):
         super().__init__()
         filename = librosa.ex("trumpet")
