@@ -1,6 +1,6 @@
 defaults:
   - model: conformer
-  - metrics: beam_search
+  - metrics: example
   - datasets: kaggle_eval # we do not want to run inference on training data
   - dataloader: example
   - transforms: example
@@ -10,4 +10,4 @@ inferencer:
   device: auto # device name or "auto"
   save_path: "beam_search_proof" # any name here, can be a dataset name
   seed: 1
-  from_pretrained: "saved/model_best.pth" # path to the pretrained model
+  from_pretrained: "saved/baseline/model_best.pth" # path to the pretrained model
