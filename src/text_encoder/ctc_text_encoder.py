@@ -30,7 +30,10 @@ class CTCTextEncoder:
                 tokens=files.tokens,
                 lm=files.lm,
                 nbest=1,
+                lm_weight=0.5,
+                word_score=1,
                 beam_size=beam_size,
+                logadd=True,
             )
             with open(files.tokens, "r") as file:
                 self.vocab = [s.strip() for s in file.readlines()]
@@ -81,7 +84,7 @@ class CTCTextEncoder:
 
     def ctc_decode(self, probs) -> str:
         if self.lm_name is not None:
-            return " ".join(self.decoder(probs.unsqueeze(0).exp().cpu())[0][0].words)
+            return " ".join(self.decoder(probs.unsqueeze(0).cpu())[0][0].words)
         inds = probs.cpu().argmax(-1).numpy()
         prev_ind = None
         res = ""

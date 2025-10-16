@@ -23,9 +23,9 @@ text_encoder:
   lm_name: "librispeech-3-gram"
   beam_size: 10
 trainer:
-  log_step: 10
-  n_epochs: 3
-  epoch_len: 20
+  log_step: 50
+  n_epochs: 5
+  epoch_len: 200
   device_tensors: ["spectrogram", "text_encoded"] # which tensors should be on device (ex. GPU)
   resume_from: null # null or path to the checkpoint dir with *.pth and config.yaml
   device: auto # device name or "auto"
