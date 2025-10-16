@@ -10,7 +10,7 @@ text_encoder:
   lm_name: "librispeech-3-gram"
   beam_size: 10
 inferencer:
-  device_tensors: ["audio", "spectrogram"] # which tensors should be on device (ex. GPU)
+  device_tensors: ["spectrogram", "spectrogram_length", "text_encoded", "text_encoded_length"] # which tensors should be on device (ex. GPU)
   device: auto # device name or "auto"
   save_path: "inferenced_best" # any name here, can be a dataset name
   seed: 1

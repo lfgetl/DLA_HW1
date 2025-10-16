@@ -8,7 +8,7 @@ defaults:
 text_encoder:
   _target_: src.text_encoder.CTCTextEncoder
 inferencer:
-  device_tensors: ["audio", "spectrogram"] # which tensors should be on device (ex. GPU)
+  device_tensors: ["spectrogram", "spectrogram_length", "text_encoded", "text_encoded_length"] # which tensors should be on device (ex. GPU)
   device: auto # device name or "auto"
   save_path: "inferenced_baseline" # any name here, can be a dataset name
   seed: 1
