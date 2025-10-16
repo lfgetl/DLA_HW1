@@ -33,7 +33,7 @@ class CTCTextEncoder:
                 lm_weight=0.5,
                 word_score=1,
                 beam_size=beam_size,
-                logadd=True,
+                log_add=True,
             )
             with open(files.tokens, "r") as file:
                 self.vocab = [s.strip() for s in file.readlines()]
