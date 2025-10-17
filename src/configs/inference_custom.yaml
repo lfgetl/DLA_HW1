@@ -1,0 +1,17 @@
+defaults:
+  - model: conformer
+  - metrics: example
+  - datasets: custom_eval # we do not want to run inference on training data
+  - dataloader: example
+  - transforms: example_only_instance
+  - _self_
+text_encoder:
+  _target_: src.text_encoder.CTCTextEncoder
+  lm_name: "librispeech-3-gram"
+  beam_size: 10
+inferencer:
+  device_tensors: ["spectrogram", "spectrogram_length", "text_encoded", "text_encoded_length"] # which tensors should be on device (ex. GPU)
+  device: auto # device name or "auto"
+  save_path: "inferenced_custom" # any name here, can be a dataset name
+  seed: 1
+  from_pretrained: "models/model_best.pth" # path to the pretrained model
