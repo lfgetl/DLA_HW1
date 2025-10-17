@@ -98,6 +98,7 @@ python3 calc_metrics.py [path to file]
 and its inference config is
 ```bash
 python3 inference.py -cn=inference_custom.yaml +datasets.test.audio_dir=[relative_path_to_dir] +datasets.test.transcription_dir=[relative_path_to_dir]
+```
 ## Credits
 
 This repository is based on a [PyTorch Project Template](https://github.com/Blinorot/pytorch_project_template).
