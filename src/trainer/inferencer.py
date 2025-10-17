@@ -177,6 +177,9 @@ class Inferencer(BaseTrainer):
         # create Save dir
         if self.save_path is not None:
             (self.save_path / part).mkdir(exist_ok=True, parents=True)
+        predictions_file = self.save_path / part / "predictions.txt"
+        if predictions_file.exists():
+            Path.unlink(predictions_file)
 
         with torch.no_grad():
             for batch_idx, batch in tqdm(
