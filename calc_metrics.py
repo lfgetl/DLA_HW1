@@ -8,11 +8,11 @@ def calc_metric(path):
         total_cer, total_wer = 0, 0
         n = 0
         for line in f.readlines():
+            line = line.strip()
             spl = line.split("\t")
             if len(spl) < 3:
                 continue
             n += 1
-            line = line.strip()
             id, text, pred_text = spl
             total_cer += calc_cer(text, pred_text)
             total_wer += calc_wer(text, pred_text)
