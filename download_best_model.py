@@ -1,10 +1,9 @@
-import os
 from pathlib import Path
 
-import wget
+import gdown
 
 LINK = (
-    "https://drive.google.com/uc?export=download&id=1-gZIc9EsM5EiOTaz96iIWJeRvYU7_1vq"
+    "https://drive.google.com/uc?export=download&id=1SBrDEQAd-5Mn_c4OqrR8Y2bOADch8vRd"
 )
 
 
@@ -13,7 +12,7 @@ def download_best_model():
     dir.mkdir(exist_ok=True)
     model_path = dir / "model_best.pth"
     if not model_path.exists():
-        wget.download(LINK, str(model_path))
+        gdown.download(LINK, str(model_path))
 
 
 if __name__ == "__main__":
