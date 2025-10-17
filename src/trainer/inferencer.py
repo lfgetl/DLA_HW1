@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import torch
 from tqdm.auto import tqdm
 
@@ -68,7 +70,7 @@ class Inferencer(BaseTrainer):
 
         # path definition
 
-        self.save_path = save_path
+        self.save_path = Path(save_path)
 
         # define metrics
         self.metrics = metrics

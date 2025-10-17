@@ -20,7 +20,7 @@ class CERMetric(BaseMetric):
         self, log_probs: Tensor, log_probs_length: Tensor, text: List[str], **kwargs
     ):
         cers = []
-        lengths = log_probs_length.detach().numpy()
+        lengths = log_probs_length.detach().cpu().numpy()
         for log_prob, length, target_text in zip(log_probs, lengths, text):
             target_text = self.text_encoder.normalize_text(target_text)
             pred_text = self.text_encoder.ctc_decode(log_prob[:length])
