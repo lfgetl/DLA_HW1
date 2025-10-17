@@ -4,7 +4,7 @@ from pathlib import Path
 import wget
 
 LINK = (
-    "https://drive.google.com/uc?export=download&id=1MP1Gt6OMT-PIvkPFDuYUGkGdXUM_n-tv"
+    "https://drive.google.com/uc?export=download&id=1-gZIc9EsM5EiOTaz96iIWJeRvYU7_1vq"
 )
 
 
