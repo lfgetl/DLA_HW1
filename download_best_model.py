@@ -3,7 +3,7 @@ from pathlib import Path
 import gdown
 
 LINK = (
-    "https://drive.google.com/uc?export=download&id=1SBrDEQAd-5Mn_c4OqrR8Y2bOADch8vRd"
+    "https://drive.google.com/uc?export=download&id=1dF-xLWhXUKCkV1PqrChAAXPvyrcyBTfs"
 )
 
 
