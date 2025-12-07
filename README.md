@@ -68,16 +68,37 @@ To run inference (evaluate the model or save predictions):
 python3 inference.py HYDRA_CONFIG_ARGUMENTS
 ```
 
-To download best model:
+To download best model (inference config is inference_best.yaml):
 ```bash
 python3 download_best_model.py
 ```
 
-To run metrics on prediction (formatted id\tground_truth\tpredictiontext\n in .txt file):
+To run metrics on prediction (formatted {id}\t{ground_truth}\t{prediction_text}\n in .txt file, default format for inference here):
 ```bash
 python3 calc_metrics.py [path to file]
 ```
 
+**Custom datasets must have the structure**
+```NameOfTheDirectoryWithUtterances
+├── audio
+│   ├── UtteranceID1.wav # may be flac or mp3
+│   ├── UtteranceID2.wav
+│   .
+│   .
+│   .
+│   └── UtteranceIDn.wav
+└── transcriptions # ground truth, HAS TO EXIST
+    ├── UtteranceID1.txt
+    ├── UtteranceID2.txt
+    .
+    .
+    .
+    └── UtteranceIDn.txt
+```
+and its inference config is
+```bash
+python3 inference.py -cn=inference_custom.yaml +datasets.test.audio_dir=[relative_path_to_dir] +datasets.test.transcription_dir=[relative_path_to_dir]
+```
 ## Credits
 
 This repository is based on a [PyTorch Project Template](https://github.com/Blinorot/pytorch_project_template).
